@@ -1,0 +1,135 @@
+## DAX Measures
+-**CALCULATED TABLE**: **Calendar**: 
+'''DAX
+ADDCOLUMNS(
+    CALENDAR(
+        MIN('spotify_songs_dataset'[release_date]), 
+        MAX('spotify_songs_dataset'[release_date])
+    ),
+    "Year", YEAR([Date]),
+    "Quarter", QUARTER([Date]),
+    "Quarter (Q)", FORMAT([Date], "\QQ"),
+    "Month", MONTH([Date]),
+    "MonthName", FORMAT([Date], "mmm"),
+    "Day of Week", WEEKDAY([Date]),
+    "DayName", FORMAT([Date], "dddd")
+)
+- **CALCULATED MEASURES**:
+- **Total Streams**: `SUM('spotify_songs_dataset'[Streams])`
+- **Average Popularity**: 'AVERAGE('spotify_songs_dataset'[popularity])'
+- **Average Popularity for Explicit Songs**: 
+'''DAX
+CALCULATE(
+    AVERAGE('spotify_songs_dataset'[popularity]),
+    'spotify_songs_dataset'[explicit_content] = "Yes"
+)
+- **Avg Collaborative Popularity**: 
+'''DAX
+CALCULATE(
+    AVERAGE('spotify_songs_dataset'[popularity]),
+    'spotify_songs_dataset'[Collaboration Type] = "Collaborative"
+)
+- **Avg Solo Popularity**: 
+'''DAX
+CALCULATE(
+    AVERAGE('spotify_songs_dataset'[popularity]),
+    'spotify_songs_dataset'[Collaboration Type] = "Solo"
+)
+- **Avg. Duration of Tracks**: 'AVERAGE('spotify_songs_dataset'[duration])'
+- **Collaborative Songs**: 
+'''DAX
+COUNTROWS(
+    FILTER(
+        spotify_songs_dataset,
+        spotify_songs_dataset[Collaboration Type] = "Collaborative"
+    )
+)
+- **Collaborative Streams**: 
+'''DAX
+CALCULATE(
+    SUM('spotify_songs_dataset'[stream]),
+    'spotify_songs_dataset'[Collaboration Type] = "Collaborative"
+)
+- **Cumulative Streams**: 
+'''DAX
+CALCULATE(
+   [Total Streams],
+    FILTER(
+        ALL('Calendar'[Date]),
+        'Calendar'[Date] <= MAX('Calendar'[Date])
+    )
+)
+- **Formatted Average Duration**: 
+'''DAX
+VAR AvgDuration = [Avg. Duration of Tracks]
+VAR Minutes = INT(AvgDuration / 60)
+VAR Seconds = MOD(AvgDuration, 60)
+RETURN
+FORMAT(Minutes, "0") & ":" & FORMAT(Seconds, "00")
+- **Latest Cumulative Streams**: 
+'''DAX
+CALCULATE(
+    [Collaborative Streams],
+    'Calendar'[Date] = MAX('Calendar'[Date])
+)
+- **Maximum Duration**: 
+'''DAX
+MAX(spotify_songs_dataset[duration])
+- **Minumum Duration**: 
+'''DAX
+MIN(spotify_songs_dataset[duration])
+-**Number of Explicit Songs**: 
+'''DAX
+CALCULATE(
+    COUNTROWS('spotify_songs_dataset'),
+    'spotify_songs_dataset'[explicit_content] = "Yes"
+)
+-**Solo Songs**: 
+'''DAX
+COUNTROWS(
+    FILTER(
+        spotify_songs_dataset,
+        spotify_songs_dataset[Collaboration Type] = "Solo"
+    )
+)
+- **Solo Streams**:
+'''DAX
+CALCULATE(
+    SUM('spotify_songs_dataset'[stream]),
+    'spotify_songs_dataset'[Collaboration Type] = "Solo"
+)
+- **Total Duration**: 'SUM('spotify_songs_dataset'[duration])'
+- **Total Songs**:'COUNTROWS(spotify_songs_dataset)'
+- **Total Streams for Explicit Songs**:
+'''DAX
+CALCULATE(
+    SUM('spotify_songs_dataset'[stream]),
+    'spotify_songs_dataset'[explicit_content] = "Yes"
+)
+- **Unique Songs by Title and Artist**:
+'''DAX
+COUNTROWS(
+    SUMMARIZE(
+        'spotify_songs_dataset',
+        'spotify_songs_dataset'[song_title],
+        'spotify_songs_dataset'[artist]
+    )
+)
+
+-**CALCULATED COLUMN**:
+- **Collaboration Type**: 
+'''DAX
+IF(spotify_songs_dataset[collaboration]="solo","Solo","Collaborative"
+)
+
+- **Duration Range**: 
+'''DAX
+SWITCH(
+    TRUE(),
+    'spotify_songs_dataset'[duration] < 120, "<2 mins",
+    'spotify_songs_dataset'[duration] >= 120 && 'spotify_songs_dataset'[duration] < 240, "2-4 mins",
+    'spotify_songs_dataset'[duration] >= 240 && 'spotify_songs_dataset'[duration] < 360, "4-6 mins",
+    ">6 mins"
+)
+
+
